@@ -27,6 +27,8 @@ public class Student {
     private Long id;
     private String name;
     private int age;
+    @OneToOne(mappedBy = "student", cascade = CascadeType.ALL)
+    private Avatar avatar;
 
     public Student() {
 
@@ -67,5 +69,14 @@ public class Student {
     @Override
     public int hashCode() {
         return Objects.hash(id, name, age);
+    }
+
+    // Геттер и сеттер для avatar
+    public Avatar getAvatar() {
+        return avatar;
+    }
+
+    public void setAvatar(Avatar avatar) {
+        this.avatar = avatar;
     }
 }

@@ -13,6 +13,13 @@ import lombok.ToString;
 @ToString
 public class Faculty {
 
+    @Schema
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private Long id;
+    private String name;
+    private String color;
+
     public Faculty() {
     }
 
@@ -21,13 +28,6 @@ public class Faculty {
         this.name = name;
         this.color = color;
     }
-
-    @Schema
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long id;
-    private String name;
-    private String color;
 
 
 }

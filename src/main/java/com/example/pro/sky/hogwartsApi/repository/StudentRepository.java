@@ -10,6 +10,8 @@ import java.util.Optional;
 public interface StudentRepository extends JpaRepository<Student, Long> {
 
     List<Student> findByAge(int age);
-    List<Student>findByAgeBetween(int minAge, int maxAge);
+
+    List<Student> findByAgeBetween(int minAge, int maxAge);
+
     Optional<Student> findById(Long id);
 }

@@ -13,7 +13,7 @@ import java.util.List;
 @Service
 public class FacultyService {
 
-private final FacultyRepository facultyRepository;
+    private final FacultyRepository facultyRepository;
 
     public Faculty createFaculty(Faculty faculty) {
         facultyRepository.save(faculty);
