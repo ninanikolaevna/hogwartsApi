@@ -13,8 +13,7 @@ import java.util.List;
 @Service
 public class FacultyService {
 
-//    FacultyRepository facultyRepository;
-FacultyRepository facultyRepository;
+private final FacultyRepository facultyRepository;
 
     public Faculty createFaculty(Faculty faculty) {
         facultyRepository.save(faculty);
@@ -23,7 +22,7 @@ FacultyRepository facultyRepository;
 
     public Faculty getFacultyById(Long id) {
         checkFacultyExists(id);
-        return facultyRepository.findById(id).get(id);
+        return facultyRepository.findById(id).get();
     }
 
     public Faculty updateFaculty(Long id, Faculty faculty) {
