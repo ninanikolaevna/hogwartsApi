@@ -4,33 +4,36 @@ import com.example.pro.sky.hogwartsApi.model.Student;
 import com.example.pro.sky.hogwartsApi.service.StudentService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Collection;
 import java.util.List;
 
 @RestController
-@RequestMapping("/student")
+@RequestMapping("/students")
+@AllArgsConstructor
 @Tag(name = "Student Management", description = "APIs for managing students")
 public class StudentController {
 
     private final StudentService studentService;
 
-    public StudentController(StudentService studentService) {
-        this.studentService = studentService;
-    }
-
     @PostMapping
     @Operation(summary = "Create a new student")
-    public Long createStudent(@RequestBody Student student) {
-        Student savedStudent = studentService.createStudent(student);
-        return savedStudent.getId();
+    public Student createStudent(@RequestBody Student student) {
+        return studentService.createStudent(student);
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "Get student by ID")
     public Student getStudentById(@PathVariable Long id) {
         return studentService.getStudentById(id);
+    }
+
+    @GetMapping("/age")
+    @Operation(summary = "Find students by age")
+    public Collection<Student> getAllStudentByAge(@RequestParam int age) {
+        return studentService.findByAge(age);
     }
 
     @PutMapping("/{id}")
@@ -45,57 +48,36 @@ public class StudentController {
         studentService.deleteStudent(id);
     }
 
-    @GetMapping("/filterByAge")
-    @Operation(summary = "Find students by age")
-    public Collection<Student> findStudentByAge(@RequestParam int age) {
-        return studentService.findStudentByAge(age);
-    }
-
     @GetMapping
     @Operation(summary = "Get all students")
     public List<Student> getAllStudents() {
         return studentService.findAll();
     }
 
-    @GetMapping("/search")
-    @Operation(summary = "Search students by name")
-    public List<Student> searchStudentsByName(@RequestParam String name) {
-        if (name == null || name.trim().isEmpty()) {
-            throw new IllegalArgumentException("Name parameter cannot be empty");
-        }
-        return studentService.findByNameContaining(name);
+    @GetMapping("/age-between")
+    @Operation(summary = "Find students by age range")
+    public Collection<Student> findByAgeBetween(@RequestParam int min, @RequestParam int max) {
+        return studentService.findByAgeBetween(min, max);
     }
 
-    @GetMapping("/count")
-    @Operation(summary = "Get total number of students")
-    public Long getStudentsCount() {
-        return studentService.getStudentsCount();
-    }
-
-    @GetMapping("/average-age")
-    @Operation(summary = "Get average age of students")
-    public Double getAverageAge() {
-        return studentService.getAverageAge();
-    }
-
-    @GetMapping("/last-five")
-    @Operation(summary = "Get last five students")
-    public List<Student> getLastFiveStudents() {
-        return studentService.getLastFiveStudents();
+    @GetMapping("/faculty/{id}")
+    @Operation(summary = "Find faculty by student ID")
+    public Object findFacultyByStudentId(@PathVariable Long id) {
+        return studentService.findFacultyByStudentId(id);
     }
 
 
-    @GetMapping("/names-starting-with-a")
-    @Operation(summary = "Get student names starting with 'A'",
-            description = "Returns sorted list of student names in uppercase starting with letter 'A'")
-    public List<String> getStudentNamesStartingWithA() {
-        return studentService.getStudentNamesStartingWithA();
+    @GetMapping("/print-parallel")
+    @Operation(summary = "Print student names in parallel threads",
+            description = "Prints student names using multiple threads (unsynchronized)")
+    public void printStudentNamesParallel() {
+        studentService.printStudentNamesParallel();
     }
 
-    @GetMapping("/average-age-stream")
-    @Operation(summary = "Get average age via Stream API",
-            description = "Returns average age of all students calculated using Stream API")
-    public Double getAverageAgeViaStream() {
-        return studentService.getAverageAgeViaStream();
+    @GetMapping("/print-synchronized")
+    @Operation(summary = "Print student names in synchronized threads",
+            description = "Prints student names using multiple threads with synchronization")
+    public void printStudentNamesSynchronized() {
+        studentService.printStudentNamesSynchronized();
     }
 }
