@@ -10,14 +10,15 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.when;
+import static org.hamcrest.Matchers.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -27,13 +28,14 @@ class StudentControllerWebMvcTest {
     private static final Long STUDENT_ID = 1L;
     private static final Long NON_EXISTENT_STUDENT_ID = 999L;
     private static final String STUDENT_NAME = "Harry Potter";
+    private static final String STUDENT_EMAIL = "harry@hogwarts.com";
     private static final String UPDATED_STUDENT_NAME = "Harry Potter Updated";
+    private static final String UPDATED_STUDENT_EMAIL = "harry.updated@hogwarts.com";
     private static final int STUDENT_AGE = 14;
     private static final int UPDATED_STUDENT_AGE = 15;
     private static final int FILTER_AGE = 14;
     private static final int NON_EXISTENT_AGE = 20;
-    private static final int MIN_AGE = 13;
-    private static final int MAX_AGE = 15;
+    private static final String SEARCH_NAME = "Harry";
 
     @Autowired
     private MockMvc mockMvc;
@@ -44,71 +46,88 @@ class StudentControllerWebMvcTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    private final Student testStudent = new Student(STUDENT_ID, STUDENT_NAME, STUDENT_AGE);
+    private final Student testStudent = new Student(STUDENT_ID, STUDENT_NAME, STUDENT_AGE, STUDENT_EMAIL);
 
     @Test
-    void createStudent_shouldReturnStudent() throws Exception {
+    void createStudent_shouldReturnStudentId() throws Exception {
+        // Arrange
+        Student newStudent = new Student(null, STUDENT_NAME, STUDENT_AGE, STUDENT_EMAIL);
         when(studentService.createStudent(any(Student.class))).thenReturn(testStudent);
 
+        // Act & Assert
         mockMvc.perform(post("/student")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(testStudent)))
+                        .content(objectMapper.writeValueAsString(newStudent)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(STUDENT_ID))
-                .andExpect(jsonPath("$.name").value(STUDENT_NAME))
-                .andExpect(jsonPath("$.age").value(STUDENT_AGE));
+                .andExpect(content().string(STUDENT_ID.toString()));
     }
 
     @Test
-    void getStudent_shouldReturnStudent() throws Exception {
+    void getStudentById_shouldReturnStudent() throws Exception {
+        // Arrange
         when(studentService.getStudentById(STUDENT_ID)).thenReturn(testStudent);
 
+        // Act & Assert
         mockMvc.perform(get("/student/{id}", STUDENT_ID))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(STUDENT_ID))
                 .andExpect(jsonPath("$.name").value(STUDENT_NAME))
-                .andExpect(jsonPath("$.age").value(STUDENT_AGE));
+                .andExpect(jsonPath("$.age").value(STUDENT_AGE))
+                .andExpect(jsonPath("$.email").value(STUDENT_EMAIL));
     }
 
     @Test
-    void getStudent_notFound() throws Exception {
+    void getStudentById_notFound() throws Exception {
+        // Arrange
         when(studentService.getStudentById(NON_EXISTENT_STUDENT_ID))
                 .thenThrow(new NotFountException("Error: Студент с id " + NON_EXISTENT_STUDENT_ID + " не найден"));
 
+        // Act & Assert
         mockMvc.perform(get("/student/{id}", NON_EXISTENT_STUDENT_ID))
                 .andExpect(status().isNotFound());
     }
 
     @Test
     void updateStudent_shouldReturnUpdatedStudent() throws Exception {
-        Student updatedStudent = new Student(STUDENT_ID, UPDATED_STUDENT_NAME, UPDATED_STUDENT_AGE);
-        when(studentService.updateStudent(anyLong(), any(Student.class))).thenReturn(updatedStudent);
+        // Arrange
+        Student updateData = new Student(null, UPDATED_STUDENT_NAME, UPDATED_STUDENT_AGE, UPDATED_STUDENT_EMAIL);
+        Student updatedStudent = new Student(STUDENT_ID, UPDATED_STUDENT_NAME, UPDATED_STUDENT_AGE, UPDATED_STUDENT_EMAIL);
 
+        when(studentService.updateStudent(eq(STUDENT_ID), any(Student.class))).thenReturn(updatedStudent);
+
+        // Act & Assert
         mockMvc.perform(put("/student/{id}", STUDENT_ID)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(updatedStudent)))
+                        .content(objectMapper.writeValueAsString(updateData)))
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(STUDENT_ID))
                 .andExpect(jsonPath("$.name").value(UPDATED_STUDENT_NAME))
-                .andExpect(jsonPath("$.age").value(UPDATED_STUDENT_AGE));
+                .andExpect(jsonPath("$.age").value(UPDATED_STUDENT_AGE))
+                .andExpect(jsonPath("$.email").value(UPDATED_STUDENT_EMAIL));
     }
 
     @Test
     void deleteStudent_shouldReturnOk() throws Exception {
+        // Arrange
         doNothing().when(studentService).deleteStudent(STUDENT_ID);
 
+        // Act & Assert
         mockMvc.perform(delete("/student/{id}", STUDENT_ID))
                 .andExpect(status().isOk());
     }
 
     @Test
     void findStudentByAge_shouldReturnStudents() throws Exception {
-        Collection<Student> students = List.of(
-                new Student(STUDENT_ID, "Student1", FILTER_AGE),
-                new Student(2L, "Student2", FILTER_AGE)
+        // Arrange
+        Collection<Student> students = Arrays.asList(
+                new Student(STUDENT_ID, "Student1", FILTER_AGE, "student1@example.com"),
+                new Student(2L, "Student2", FILTER_AGE, "student2@example.com")
         );
         when(studentService.findStudentByAge(FILTER_AGE)).thenReturn(students);
 
-        mockMvc.perform(get("/student/age/{age}", FILTER_AGE))
+        // Act & Assert
+        mockMvc.perform(MockMvcRequestBuilders.get("/student/filterByAge")
+                        .param("age", String.valueOf(FILTER_AGE)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(2))
                 .andExpect(jsonPath("$[0].age").value(FILTER_AGE))
@@ -116,23 +135,87 @@ class StudentControllerWebMvcTest {
     }
 
     @Test
-    void findStudentByAge_shouldReturnEmptyCollection() throws Exception {
-        when(studentService.findStudentByAge(NON_EXISTENT_AGE)).thenReturn(List.of());
+    void getAllStudents_shouldReturnAllStudents() throws Exception {
+        // Arrange
+        List<Student> students = Arrays.asList(
+                new Student(STUDENT_ID, STUDENT_NAME, STUDENT_AGE, STUDENT_EMAIL),
+                new Student(2L, "Hermione Granger", 15, "hermione@hogwarts.com")
+        );
+        when(studentService.findAll()).thenReturn(students);
 
-        mockMvc.perform(get("/student/age/{age}", NON_EXISTENT_AGE))
+        // Act & Assert
+        mockMvc.perform(get("/student"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(0));
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[0].name").value(STUDENT_NAME))
+                .andExpect(jsonPath("$[1].name").value("Hermione Granger"));
     }
 
     @Test
-    void findStudentsWithParams_shouldUseMockMvcRequestBuildersParam() throws Exception {
-        Collection<Student> students = List.of(testStudent);
+    void searchStudentsByName_shouldReturnMatchingStudents() throws Exception {
+        // Arrange
+        List<Student> students = Arrays.asList(
+                new Student(STUDENT_ID, STUDENT_NAME, STUDENT_AGE, STUDENT_EMAIL),
+                new Student(2L, "Harry Styles", 20, "harry.styles@example.com")
+        );
+        when(studentService.findByNameContaining(SEARCH_NAME)).thenReturn(students);
 
-        // Демонстрация использования MockMvcRequestBuilders.param
-        mockMvc.perform(get("/student/filter")
-                        .param("minAge", String.valueOf(MIN_AGE))
-                        .param("maxAge", String.valueOf(MAX_AGE))
-                        .param("name", STUDENT_NAME))
-                .andExpect(status().isOk());
+        // Act & Assert
+        mockMvc.perform(MockMvcRequestBuilders.get("/student/search")
+                        .param("name", SEARCH_NAME))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[0].name", containsString(SEARCH_NAME)))
+                .andExpect(jsonPath("$[1].name", containsString(SEARCH_NAME)));
+    }
+
+    @Test
+    void searchStudentsByName_withEmptyName_shouldReturnBadRequest() throws Exception {
+        // Act & Assert
+        mockMvc.perform(MockMvcRequestBuilders.get("/student/search")
+                        .param("name", ""))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void getStudentsCount_shouldReturnTotalCount() throws Exception {
+        // Arrange
+        when(studentService.getStudentsCount()).thenReturn(25L);
+
+        // Act & Assert
+        mockMvc.perform(get("/student/count"))
+                .andExpect(status().isOk())
+                .andExpect(content().string("25"));
+    }
+
+    @Test
+    void getAverageAge_shouldReturnAverageAge() throws Exception {
+        // Arrange
+        when(studentService.getAverageAge()).thenReturn(16.7);
+
+        // Act & Assert
+        mockMvc.perform(get("/student/average-age"))
+                .andExpect(status().isOk())
+                .andExpect(content().string("16.7"));
+    }
+
+    @Test
+    void getLastFiveStudents_shouldReturnFiveStudents() throws Exception {
+        // Arrange
+        List<Student> students = Arrays.asList(
+                new Student(1L, "Student1", 20, "student1@example.com"),
+                new Student(2L, "Student2", 21, "student2@example.com"),
+                new Student(3L, "Student3", 22, "student3@example.com"),
+                new Student(4L, "Student4", 23, "student4@example.com"),
+                new Student(5L, "Student5", 24, "student5@example.com")
+        );
+        when(studentService.getLastFiveStudents()).thenReturn(students);
+
+        // Act & Assert
+        mockMvc.perform(get("/student/last-five"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(5))
+                .andExpect(jsonPath("$[0].name").value("Student1"))
+                .andExpect(jsonPath("$[4].name").value("Student5"));
     }
 }

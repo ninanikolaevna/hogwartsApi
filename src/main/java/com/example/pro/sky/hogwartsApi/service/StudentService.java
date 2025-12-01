@@ -7,6 +7,8 @@ import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
 
 @AllArgsConstructor
 @Service
@@ -14,18 +16,17 @@ public class StudentService {
 
     private final StudentRepository studentRepository;
 
-//    public StudentService() {
-//
-//    }
-
     public Student createStudent(Student student) {
-        studentRepository.save(student);
-        return student;
+        return studentRepository.save(student);
     }
 
     public Student getStudentById(Long id) {
         checkStudentExists(id);
         return studentRepository.findById(id).get();
+    }
+
+    public Optional<Student> findById(Long id) {
+        return studentRepository.findById(id);
     }
 
     public Student updateStudent(Long id, Student student) {
@@ -39,8 +40,38 @@ public class StudentService {
         studentRepository.deleteById(studentId);
     }
 
+    public boolean deleteById(Long id) {
+        if (studentRepository.existsById(id)) {
+            studentRepository.deleteById(id);
+            return true;
+        }
+        return false;
+    }
+
     public Collection<Student> findStudentByAge(int studentAge) {
         return studentRepository.findByAge(studentAge);
+    }
+
+    public List<Student> findAll() {
+        return studentRepository.findAll();
+    }
+
+    public List<Student> findByNameContaining(String name) {
+        return studentRepository.findByNameContainingIgnoreCase(name);
+    }
+
+    // Новые методы для дополнительных эндпоинтов
+    public Long getStudentsCount() {
+        return studentRepository.countAllStudents();
+    }
+
+    public Double getAverageAge() {
+        Double average = studentRepository.findAverageAge();
+        return average != null ? average : 0.0;
+    }
+
+    public List<Student> getLastFiveStudents() {
+        return studentRepository.findLastFiveStudents();
     }
 
     public void checkStudentExists(Long id) {

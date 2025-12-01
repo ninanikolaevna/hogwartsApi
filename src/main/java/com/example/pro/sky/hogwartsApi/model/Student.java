@@ -1,7 +1,6 @@
 package com.example.pro.sky.hogwartsApi.model;
 
 import jakarta.persistence.*;
-
 import java.util.Objects;
 
 @Entity
@@ -17,6 +16,9 @@ public class Student {
     @Column(name = "age")
     private int age;
 
+    @Column(name = "email", unique = true)
+    private String email;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "faculty_id")
     private Faculty faculty;
@@ -24,8 +26,28 @@ public class Student {
     @OneToOne(mappedBy = "student", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Avatar avatar;
 
-    // Конструкторы
     public Student() {
+    }
+
+    public Student(Long id, String name, int age, String email) {
+        this.id = id;
+        this.name = name;
+        this.age = age;
+        this.email = email;
+    }
+
+    public Student(String name, int age, String email) {
+        this.name = name;
+        this.age = age;
+        this.email = email;
+    }
+
+    public Student(Long id, String name, int age, String email, Faculty faculty) {
+        this.id = id;
+        this.name = name;
+        this.age = age;
+        this.email = email;
+        this.faculty = faculty;
     }
 
     public Student(Long id, String name, int age) {
@@ -37,19 +59,6 @@ public class Student {
     public Student(String name, int age) {
         this.name = name;
         this.age = age;
-    }
-
-    public Student(Long id, String name, int age, Faculty faculty) {
-        this.id = id;
-        this.name = name;
-        this.age = age;
-        this.faculty = faculty;
-    }
-
-    public Student(String name, int age, Faculty faculty) {
-        this.name = name;
-        this.age = age;
-        this.faculty = faculty;
     }
 
     // Геттеры и сеттеры
@@ -77,6 +86,14 @@ public class Student {
         this.age = age;
     }
 
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
     public Faculty getFaculty() {
         return faculty;
     }
@@ -93,7 +110,6 @@ public class Student {
         this.avatar = avatar;
     }
 
-    // equals и hashCode
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -101,22 +117,24 @@ public class Student {
         Student student = (Student) o;
         return age == student.age &&
                 Objects.equals(id, student.id) &&
-                Objects.equals(name, student.name);
+                Objects.equals(name, student.name) &&
+                Objects.equals(email, student.email);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, name, age);
+        return Objects.hash(id, name, age, email);
     }
 
-    // toString
     @Override
     public String toString() {
         return "Student{" +
                 "id=" + id +
                 ", name='" + name + '\'' +
                 ", age=" + age +
+                ", email='" + email + '\'' +
                 ", faculty=" + (faculty != null ? faculty.getName() : "null") +
+                ", facultyColor=" + (faculty != null ? faculty.getColor() : "null") +
                 '}';
     }
 }

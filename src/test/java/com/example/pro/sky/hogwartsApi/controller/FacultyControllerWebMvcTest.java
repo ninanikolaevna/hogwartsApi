@@ -126,12 +126,14 @@ class FacultyControllerWebMvcTest {
     @Test
     void findFacultiesWithParams_shouldUseMockMvcRequestBuildersParam() throws Exception {
         List<Faculty> faculties = List.of(testFaculty);
+        when(facultyService.findFacultiesWithParams(anyString(), anyString())).thenReturn(faculties);
 
-        // Демонстрация использования MockMvcRequestBuilders.param
         mockMvc.perform(get("/faculty/filter")
                         .param("name", FILTER_NAME)
-                        .param("color", FILTER_COLOR)
-                        .param("search", "test"))
-                .andExpect(status().isOk());
+                        .param("color", FILTER_COLOR))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].name").value(FACULTY_NAME))
+                .andExpect(jsonPath("$[0].color").value(FACULTY_COLOR));
     }
 }
