@@ -1,0 +1,4 @@
+databaseChangeLog:
+  - include:
+      file: classpath:liquibase/changesets/create-indexes.yml
+      relativeToChangelogFile: false
