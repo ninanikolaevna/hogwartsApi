@@ -8,7 +8,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
-
 @AllArgsConstructor
 @Service
 public class FacultyService {
@@ -16,13 +15,12 @@ public class FacultyService {
     private final FacultyRepository facultyRepository;
 
     public Faculty createFaculty(Faculty faculty) {
-        facultyRepository.save(faculty);
-        return faculty;
+        return facultyRepository.save(faculty);
     }
 
     public Faculty getFacultyById(Long id) {
-        checkFacultyExists(id);
-        return facultyRepository.findById(id).get();
+        return facultyRepository.findById(id)
+                .orElseThrow(() -> new NotFountException("Error: Факультет с id " + id + " не найден"));
     }
 
     public Faculty updateFaculty(Long id, Faculty faculty) {
@@ -31,19 +29,26 @@ public class FacultyService {
         return facultyRepository.save(faculty);
     }
 
-    public void deleteFaculty(Long facultyId) {
-        checkFacultyExists(facultyId);
-        facultyRepository.deleteById(facultyId);
+    public void deleteFaculty(Long id) {
+        checkFacultyExists(id);
+        facultyRepository.deleteById(id);
     }
 
     public List<Faculty> findByColor(String color) {
         return facultyRepository.findByColorIgnoreCase(color);
     }
 
-    public void checkFacultyExists(Long id) {
+    public List<Faculty> findAll() {
+        return facultyRepository.findAll();
+    }
+
+    public Faculty findByName(String name) {
+        return facultyRepository.findByName(name);
+    }
+
+    private void checkFacultyExists(Long id) {
         if (!facultyRepository.existsById(id)) {
             throw new NotFountException("Error: Факультет с id " + id + " не найден");
         }
     }
 }
-

@@ -1,9 +1,10 @@
 package com.example.pro.sky.hogwartsApi.model;
 
-
 import jakarta.persistence.*;
+import java.time.LocalDateTime;
 
 @Entity
+@Table(name = "avatars") // Добавляем явное имя таблицы
 public class Avatar {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -13,6 +14,8 @@ public class Avatar {
     private long fileSize;
     private String mediaType;
 
+    private LocalDateTime createdAt; // Добавляем поле для времени создания
+
     @Lob
     private byte[] data;
 
@@ -20,10 +23,21 @@ public class Avatar {
     @JoinColumn(name = "student_id")
     private Student student;
 
-
     public Avatar() {
+        this.createdAt = LocalDateTime.now(); // Инициализируем в конструкторе по умолчанию
     }
 
+    // Конструктор без id для создания новых объектов
+    public Avatar(String filePath, long fileSize, String mediaType, byte[] data, Student student) {
+        this();
+        this.filePath = filePath;
+        this.fileSize = fileSize;
+        this.mediaType = mediaType;
+        this.data = data;
+        this.student = student;
+    }
+
+    // Полный конструктор
     public Avatar(Long id, String filePath, long fileSize, String mediaType, byte[] data, Student student) {
         this.id = id;
         this.filePath = filePath;
@@ -31,6 +45,7 @@ public class Avatar {
         this.mediaType = mediaType;
         this.data = data;
         this.student = student;
+        this.createdAt = LocalDateTime.now();
     }
 
     // Геттеры и сеттеры
@@ -64,6 +79,14 @@ public class Avatar {
 
     public void setMediaType(String mediaType) {
         this.mediaType = mediaType;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
     }
 
     public byte[] getData() {
