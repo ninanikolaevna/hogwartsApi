@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @AllArgsConstructor
 @Service
@@ -135,6 +136,42 @@ public class StudentService {
         logger.info("Found {} last students", students.size());
         logger.debug("Last five students: {}", students);
         return students;
+    }
+
+
+    /**
+     * Получить имена студентов, начинающиеся с буквы 'А'
+     * Отсортированные по алфавиту в верхнем регистре
+     */
+    public List<String> getStudentNamesStartingWithA() {
+        logger.info("Was invoked method for get student names starting with 'A'");
+
+        List<String> names = studentRepository.findAll().stream()
+                .map(Student::getName)
+                .filter(name -> name != null && !name.isEmpty() &&
+                        name.toUpperCase().startsWith("А"))
+                .map(String::toUpperCase)
+                .sorted()
+                .collect(Collectors.toList());
+
+        logger.info("Found {} student names starting with 'A'", names.size());
+        logger.debug("Names: {}", names);
+        return names;
+    }
+
+    /**
+     * Получить средний возраст всех студентов через Stream API
+     */
+    public Double getAverageAgeViaStream() {
+        logger.info("Was invoked method for get average age via Stream API");
+
+        Double averageAge = studentRepository.findAll().stream()
+                .mapToInt(Student::getAge)
+                .average()
+                .orElse(0.0);
+
+        logger.info("Average age via Stream API: {}", averageAge);
+        return averageAge;
     }
 
     public void checkStudentExists(Long id) {

@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @AllArgsConstructor
 @Service
@@ -95,5 +96,18 @@ public class FacultyService {
         }
 
         logger.debug("Faculty with id: {} exists", id);
+    }
+
+    public String getLongestFacultyName() {
+        logger.info("Was invoked method for get longest faculty name");
+
+        Optional<String> longestName = facultyRepository.findAll().stream()
+                .map(Faculty::getName)
+                .filter(name -> name != null && !name.isEmpty())
+                .max((name1, name2) -> Integer.compare(name1.length(), name2.length()));
+
+        String result = longestName.orElse("No faculties found");
+        logger.info("Longest faculty name: {} (length: {})", result, result.length());
+        return result;
     }
 }
