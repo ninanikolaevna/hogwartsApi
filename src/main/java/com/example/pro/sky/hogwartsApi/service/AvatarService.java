@@ -4,6 +4,8 @@ import com.example.pro.sky.hogwartsApi.model.Avatar;
 import com.example.pro.sky.hogwartsApi.model.Student;
 import com.example.pro.sky.hogwartsApi.repository.AvatarRepository;
 import com.example.pro.sky.hogwartsApi.repository.StudentRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -20,13 +22,13 @@ import java.util.Optional;
 @Service
 @Transactional
 public class AvatarService {
+    private static final Logger logger = LoggerFactory.getLogger(AvatarService.class);
     private final AvatarRepository avatarRepository;
     private final StudentRepository studentRepository;
 
     @Value("${avatars.dir.path}")
     private String avatarsDir;
 
-    // Константа для размера страницы по умолчанию
     private static final int DEFAULT_PAGE_SIZE = 10;
 
     public AvatarService(AvatarRepository avatarRepository, StudentRepository studentRepository) {
@@ -35,15 +37,20 @@ public class AvatarService {
     }
 
     public void uploadAvatar(Long studentId, MultipartFile file) throws IOException {
-        Student student = studentRepository.findById(studentId)
-                .orElseThrow(() -> new RuntimeException("Student not found"));
+        logger.info("Was invoked method for upload avatar for student id: {}", studentId);
+        logger.debug("Uploading file: {} for student id: {}", file.getOriginalFilename(), studentId);
 
-        // Создаем директорию если не существует
+        Student student = studentRepository.findById(studentId)
+                .orElseThrow(() -> {
+                    logger.error("Student with id = {} not found for avatar upload", studentId);
+                    return new RuntimeException("Student not found");
+                });
+
         Path filePath = Path.of(avatarsDir, studentId + "." + getExtension(file.getOriginalFilename()));
         Files.createDirectories(filePath.getParent());
         Files.deleteIfExists(filePath);
 
-        // Сохраняем файл на диск
+        logger.debug("Saving avatar to path: {}", filePath);
         try (InputStream is = file.getInputStream();
              OutputStream os = Files.newOutputStream(filePath);
              BufferedInputStream bis = new BufferedInputStream(is, 1024);
@@ -51,7 +58,6 @@ public class AvatarService {
             bis.transferTo(bos);
         }
 
-        // Сохраняем в БД
         Avatar avatar = avatarRepository.findByStudent(student)
                 .orElse(new Avatar());
         avatar.setStudent(student);
@@ -61,43 +67,62 @@ public class AvatarService {
         avatar.setData(file.getBytes());
 
         avatarRepository.save(avatar);
+        logger.info("Avatar uploaded successfully for student id: {}", studentId);
     }
 
     public Avatar findAvatar(Long studentId) {
+        logger.info("Was invoked method for find avatar by student id: {}", studentId);
+
         return avatarRepository.findByStudentId(studentId)
-                .orElseThrow(() -> new RuntimeException("Avatar not found"));
+                .orElseThrow(() -> {
+                    logger.error("Avatar not found for student id = {}", studentId);
+                    return new RuntimeException("Avatar not found");
+                });
     }
 
-    // Добавляем метод для получения аватарок с пагинацией
     public Page<Avatar> getAllAvatars(Integer page, Integer size) {
-        // Устанавливаем значения по умолчанию, если параметры не переданы
+        logger.info("Was invoked method for get all avatars with pagination");
+        logger.debug("Page: {}, Size: {}", page, size);
+
         int pageNumber = page != null && page >= 0 ? page : 0;
         int pageSize = size != null && size > 0 ? size : DEFAULT_PAGE_SIZE;
 
         Pageable pageable = PageRequest.of(pageNumber, pageSize);
-        return avatarRepository.findAll(pageable);
+        Page<Avatar> avatars = avatarRepository.findAll(pageable);
+
+        logger.info("Retrieved {} avatars on page {}", avatars.getContent().size(), pageNumber);
+        return avatars;
     }
 
-    // Добавляем метод для поиска аватара по ID
     public Optional<Avatar> findById(Long id) {
+        logger.info("Was invoked method for find avatar by id: {}", id);
+
         return avatarRepository.findById(id);
     }
 
-    // Добавляем метод для сохранения аватара
     public Avatar save(Avatar avatar) {
-        return avatarRepository.save(avatar);
+        logger.info("Was invoked method for save avatar");
+
+        Avatar savedAvatar = avatarRepository.save(avatar);
+        logger.info("Avatar saved with id: {}", savedAvatar.getId());
+        return savedAvatar;
     }
 
-    // Добавляем метод для удаления аватара по ID
     public boolean deleteById(Long id) {
+        logger.info("Was invoked method for delete avatar by id: {}", id);
+
         if (avatarRepository.existsById(id)) {
             avatarRepository.deleteById(id);
+            logger.info("Avatar with id: {} deleted successfully", id);
             return true;
         }
+
+        logger.warn("Attempted to delete non-existent avatar with id: {}", id);
         return false;
     }
 
     private String getExtension(String fileName) {
+        logger.debug("Getting extension for file: {}", fileName);
         return fileName.substring(fileName.lastIndexOf(".") + 1);
     }
 }
