@@ -1,6 +1,6 @@
 package com.example.pro.sky.hogwartsApi.service;
 
-import com.example.pro.sky.hogwartsApi.exception.NotFountException;
+import com.example.pro.sky.hogwartsApi.exception.NotFoundException;
 import com.example.pro.sky.hogwartsApi.model.Faculty;
 import com.example.pro.sky.hogwartsApi.model.Student;
 import com.example.pro.sky.hogwartsApi.repository.StudentRepository;
@@ -35,8 +35,8 @@ public class StudentService {
 
         Student student = studentRepository.findById(id)
                 .orElseThrow(() -> {
-                    logger.error("There is not student with id = {}", id);
-                    return new NotFountException("Error: Студент с id " + id + " не найден");
+                    logger.error("Student not found with id = {}", id);
+                    return new NotFoundException(Student.class, id);
                 });
 
         logger.info("Student found: {}", student.getName());
@@ -104,7 +104,7 @@ public class StudentService {
 
         if (!studentRepository.existsById(id)) {
             logger.error("Student with id = {} does not exist", id);
-            throw new NotFountException("Error: Студент с id " + id + " не найден");
+            throw new NotFoundException(Student.class, id);
         }
 
         logger.debug("Student with id: {} exists", id);

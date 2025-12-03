@@ -1,6 +1,6 @@
 package com.example.pro.sky.hogwartsApi.controller;
 
-import com.example.pro.sky.hogwartsApi.exception.NotFountException;
+import com.example.pro.sky.hogwartsApi.exception.NotFoundException;
 import com.example.pro.sky.hogwartsApi.model.Faculty;
 import com.example.pro.sky.hogwartsApi.service.FacultyService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -72,7 +72,7 @@ class FacultyControllerWebMvcTest {
     @Test
     void getFaculty_notFound() throws Exception {
         when(facultyService.getFacultyById(NON_EXISTENT_FACULTY_ID))
-                .thenThrow(new NotFountException("Error: Факультет с id " + NON_EXISTENT_FACULTY_ID + " не найден"));
+                .thenThrow(new NotFoundException("Error: Факультет с id " + NON_EXISTENT_FACULTY_ID + " не найден"));
 
         mockMvc.perform(get("/faculty/{id}", NON_EXISTENT_FACULTY_ID))
                 .andExpect(status().isNotFound());

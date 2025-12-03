@@ -1,6 +1,6 @@
 package com.example.pro.sky.hogwartsApi.controller;
 
-import com.example.pro.sky.hogwartsApi.exception.NotFountException;
+import com.example.pro.sky.hogwartsApi.exception.NotFoundException;
 import com.example.pro.sky.hogwartsApi.model.Student;
 import com.example.pro.sky.hogwartsApi.service.StudentService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -80,7 +80,7 @@ class StudentControllerWebMvcTest {
     void getStudentById_notFound() throws Exception {
         // Arrange
         when(studentService.getStudentById(NON_EXISTENT_STUDENT_ID))
-                .thenThrow(new NotFountException("Error: Студент с id " + NON_EXISTENT_STUDENT_ID + " не найден"));
+                .thenThrow(new NotFoundException("Error: Студент с id " + NON_EXISTENT_STUDENT_ID + " не найден"));
 
         // Act & Assert
         mockMvc.perform(get("/student/{id}", NON_EXISTENT_STUDENT_ID))

@@ -1,6 +1,6 @@
 package com.example.pro.sky.hogwartsApi.service;
 
-import com.example.pro.sky.hogwartsApi.exception.NotFountException;
+import com.example.pro.sky.hogwartsApi.exception.NotFoundException;
 import com.example.pro.sky.hogwartsApi.model.Faculty;
 import com.example.pro.sky.hogwartsApi.repository.FacultyRepository;
 import lombok.AllArgsConstructor;
@@ -33,7 +33,7 @@ public class FacultyService {
         Faculty faculty = facultyRepository.findById(id)
                 .orElseThrow(() -> {
                     logger.error("There is not faculty with id = {}", id);
-                    return new NotFountException("Error: Факультет с id " + id + " не найден");
+                    return new NotFoundException("Error: Факультет с id " + id + " не найден");
                 });
 
         logger.info("Faculty found: {}", faculty.getName());
@@ -92,7 +92,7 @@ public class FacultyService {
 
         if (!facultyRepository.existsById(id)) {
             logger.error("Faculty with id = {} does not exist", id);
-            throw new NotFountException("Error: Факультет с id " + id + " не найден");
+            throw new NotFoundException("Error: Факультет с id " + id + " не найден");
         }
 
         logger.debug("Faculty with id: {} exists", id);
