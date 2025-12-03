@@ -1,6 +1,6 @@
 package com.example.pro.sky.hogwartsApi.service;
 
-import com.example.pro.sky.hogwartsApi.exception.NotFountException;
+import com.example.pro.sky.hogwartsApi.exception.NotFoundException;
 import com.example.pro.sky.hogwartsApi.model.Student;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -41,7 +41,7 @@ public class StudentServiceTest {
 
             @Test
             void getStudentById_ThrowsExceptionIfStudentNotFound() {
-                assertThrows(NotFountException.class, () -> {
+                assertThrows(NotFoundException.class, () -> {
                     out.getStudentById(100L);
                 });
             }
@@ -58,7 +58,7 @@ public class StudentServiceTest {
 
             @Test
             void updateStudent_shouldThrowNotFoundException() {
-                assertThrows(NotFountException.class, () -> out.updateStudent(999L, HARRY));
+                assertThrows(NotFoundException.class, () -> out.updateStudent(999L, HARRY));
             }
 
             @Test
@@ -67,13 +67,13 @@ public class StudentServiceTest {
 
                 out.deleteStudent(createdStudent.getId());
 
-                assertThrows(NotFountException.class, () -> out.getStudentById(createdStudent.getId()));
+                assertThrows(NotFoundException.class, () -> out.getStudentById(createdStudent.getId()));
             }
 
 
             @Test
             void deleteStudent_ThrowsExceptionIfStudentNotFound() {
-                assertThrows(NotFountException.class, () -> {
+                assertThrows(NotFoundException.class, () -> {
                     out.deleteStudent(999L);
                 });
             }

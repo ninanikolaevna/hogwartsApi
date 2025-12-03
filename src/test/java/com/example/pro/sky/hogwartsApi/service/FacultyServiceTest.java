@@ -1,6 +1,6 @@
 package com.example.pro.sky.hogwartsApi.service;
 
-import com.example.pro.sky.hogwartsApi.exception.NotFountException;
+import com.example.pro.sky.hogwartsApi.exception.NotFoundException;
 import com.example.pro.sky.hogwartsApi.model.Faculty;
 import com.example.pro.sky.hogwartsApi.repository.FacultyRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -76,7 +76,7 @@ class FacultyServiceTest {
         when(facultyRepository.findById(999L)).thenReturn(Optional.empty());
 
         // Act & Assert
-        assertThrows(NotFountException.class, () -> facultyService.getFacultyById(999L));
+        assertThrows(NotFoundException.class, () -> facultyService.getFacultyById(999L));
         verify(facultyRepository, times(1)).findById(999L);
     }
 
@@ -106,7 +106,7 @@ class FacultyServiceTest {
         when(facultyRepository.existsById(999L)).thenReturn(false);
 
         // Act & Assert
-        assertThrows(NotFountException.class, () -> facultyService.updateFaculty(999L, updatedFaculty));
+        assertThrows(NotFoundException.class, () -> facultyService.updateFaculty(999L, updatedFaculty));
         verify(facultyRepository, times(1)).existsById(999L);
         verify(facultyRepository, never()).save(any(Faculty.class));
     }
@@ -131,7 +131,7 @@ class FacultyServiceTest {
         when(facultyRepository.existsById(999L)).thenReturn(false);
 
         // Act & Assert
-        assertThrows(NotFountException.class, () -> facultyService.deleteFaculty(999L));
+        assertThrows(NotFoundException.class, () -> facultyService.deleteFaculty(999L));
         verify(facultyRepository, times(1)).existsById(999L);
         verify(facultyRepository, never()).deleteById(anyLong());
     }

@@ -1,6 +1,7 @@
 package com.example.pro.sky.hogwartsApi.service;
 
-import com.example.pro.sky.hogwartsApi.exception.NotFountException;
+import com.example.pro.sky.hogwartsApi.exception.NotFoundException;
+import com.example.pro.sky.hogwartsApi.model.Faculty;
 import com.example.pro.sky.hogwartsApi.model.Student;
 import com.example.pro.sky.hogwartsApi.repository.StudentRepository;
 import lombok.AllArgsConstructor;
@@ -10,14 +11,14 @@ import org.springframework.stereotype.Service;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 @AllArgsConstructor
 @Service
 public class StudentService {
 
     private static final Logger logger = LoggerFactory.getLogger(StudentService.class);
+    private static final int REQUIRED_STUDENTS_COUNT = 6;
+
     private final StudentRepository studentRepository;
 
     public Student createStudent(Student student) {
@@ -31,157 +32,189 @@ public class StudentService {
 
     public Student getStudentById(Long id) {
         logger.info("Was invoked method for get student by id: {}", id);
-        logger.debug("Looking for student with id: {}", id);
 
-        checkStudentExists(id);
-        Student student = studentRepository.findById(id).get();
+        Student student = studentRepository.findById(id)
+                .orElseThrow(() -> {
+                    logger.error("Student not found with id = {}", id);
+                    return new NotFoundException(Student.class, id);
+                });
+
         logger.info("Student found: {}", student.getName());
         return student;
     }
 
-    public Optional<Student> findById(Long id) {
-        logger.info("Was invoked method for find student by id: {}", id);
-        logger.debug("Searching for student with id: {}", id);
-
-        return studentRepository.findById(id);
-    }
-
     public Student updateStudent(Long id, Student student) {
         logger.info("Was invoked method for update student with id: {}", id);
-        logger.debug("Updating student id: {} with data: {}", id, student);
 
         checkStudentExists(id);
         student.setId(id);
+
         Student updatedStudent = studentRepository.save(student);
         logger.info("Student with id: {} updated successfully", id);
         return updatedStudent;
     }
 
-    public void deleteStudent(Long studentId) {
-        logger.info("Was invoked method for delete student with id: {}", studentId);
-        logger.debug("Attempting to delete student with id: {}", studentId);
+    public void deleteStudent(Long id) {
+        logger.info("Was invoked method for delete student with id: {}", id);
 
-        checkStudentExists(studentId);
-        studentRepository.deleteById(studentId);
-        logger.info("Student with id: {} deleted successfully", studentId);
+        checkStudentExists(id);
+        studentRepository.deleteById(id);
+        logger.info("Student with id: {} deleted successfully", id);
     }
 
-    public boolean deleteById(Long id) {
-        logger.info("Was invoked method for delete student by id: {}", id);
+    public Collection<Student> findByAge(int age) {
+        logger.info("Was invoked method for find students by age: {}", age);
 
-        if (studentRepository.existsById(id)) {
-            logger.debug("Deleting student with id: {}", id);
-            studentRepository.deleteById(id);
-            logger.info("Student with id: {} deleted", id);
-            return true;
-        }
-
-        logger.warn("Attempted to delete non-existent student with id: {}", id);
-        return false;
-    }
-
-    public Collection<Student> findStudentByAge(int studentAge) {
-        logger.info("Was invoked method for find students by age: {}", studentAge);
-        logger.debug("Searching for students with age: {}", studentAge);
-
-        Collection<Student> students = studentRepository.findByAge(studentAge);
-        logger.info("Found {} students with age: {}", students.size(), studentAge);
+        Collection<Student> students = studentRepository.findByAge(age);
+        logger.info("Found {} students with age: {}", students.size(), age);
         return students;
     }
 
-    public List<Student> findAll() {
+    public Collection<Student> findAll() {
         logger.info("Was invoked method for get all students");
 
-        List<Student> students = studentRepository.findAll();
+        Collection<Student> students = studentRepository.findAll();
         logger.info("Found {} students total", students.size());
-        logger.debug("Students list: {}", students);
         return students;
     }
 
-    public List<Student> findByNameContaining(String name) {
-        logger.info("Was invoked method for find students by name containing: {}", name);
-        logger.debug("Searching for students with name containing: {}", name);
+    public Collection<Student> findByAgeBetween(int min, int max) {
+        logger.info("Was invoked method for find students by age between {} and {}", min, max);
 
-        if (name == null || name.trim().isEmpty()) {
-            logger.warn("Empty name parameter provided for search");
-            throw new IllegalArgumentException("Name parameter cannot be empty");
+        Collection<Student> students = studentRepository.findByAgeBetween(min, max);
+        logger.info("Found {} students with age between {} and {}", students.size(), min, max);
+        return students;
+    }
+
+    public Object findFacultyByStudentId(Long id) {
+        logger.info("Was invoked method for find faculty by student id: {}", id);
+
+        Student student = getStudentById(id);
+        Faculty faculty = student.getFaculty();
+        if (faculty == null) {
+            logger.info("Student with id: {} has no faculty", id);
+            return "Student has no faculty";
         }
-
-        List<Student> students = studentRepository.findByNameContainingIgnoreCase(name);
-        logger.info("Found {} students with name containing: {}", students.size(), name);
-        return students;
+        logger.info("Faculty found for student id {}: {}", id, faculty.getName());
+        return faculty;
     }
 
-    public Long getStudentsCount() {
-        logger.info("Was invoked method for get students count");
-
-        Long count = studentRepository.countAllStudents();
-        logger.info("Total students count: {}", count);
-        return count;
-    }
-
-    public Double getAverageAge() {
-        logger.info("Was invoked method for get average age of students");
-
-        Double average = studentRepository.findAverageAge();
-        Double result = average != null ? average : 0.0;
-        logger.info("Average age of students: {}", result);
-        return result;
-    }
-
-    public List<Student> getLastFiveStudents() {
-        logger.info("Was invoked method for get last five students");
-
-        List<Student> students = studentRepository.findLastFiveStudents();
-        logger.info("Found {} last students", students.size());
-        logger.debug("Last five students: {}", students);
-        return students;
-    }
-
-
-    /**
-     * Получить имена студентов, начинающиеся с буквы 'А'
-     * Отсортированные по алфавиту в верхнем регистре
-     */
-    public List<String> getStudentNamesStartingWithA() {
-        logger.info("Was invoked method for get student names starting with 'A'");
-
-        List<String> names = studentRepository.findAll().stream()
-                .map(Student::getName)
-                .filter(name -> name != null && !name.isEmpty() &&
-                        name.toUpperCase().startsWith("А"))
-                .map(String::toUpperCase)
-                .sorted()
-                .collect(Collectors.toList());
-
-        logger.info("Found {} student names starting with 'A'", names.size());
-        logger.debug("Names: {}", names);
-        return names;
-    }
-
-    /**
-     * Получить средний возраст всех студентов через Stream API
-     */
-    public Double getAverageAgeViaStream() {
-        logger.info("Was invoked method for get average age via Stream API");
-
-        Double averageAge = studentRepository.findAll().stream()
-                .mapToInt(Student::getAge)
-                .average()
-                .orElse(0.0);
-
-        logger.info("Average age via Stream API: {}", averageAge);
-        return averageAge;
-    }
-
-    public void checkStudentExists(Long id) {
+    private void checkStudentExists(Long id) {
         logger.debug("Checking if student exists with id: {}", id);
 
         if (!studentRepository.existsById(id)) {
-            logger.error("There is not student with id = {}", id);
-            throw new NotFountException("Error: Студент с id " + id + " не найден");
+            logger.error("Student with id = {} does not exist", id);
+            throw new NotFoundException(Student.class, id);
         }
 
         logger.debug("Student with id: {} exists", id);
+    }
+
+    // ============ МНОГОПОТОЧНЫЕ МЕТОДЫ ============
+
+    public void printStudentNamesParallel() {
+        logger.info("Was invoked method for printing student names in parallel");
+
+        List<Student> students = (List<Student>) findAll();
+
+        if (students.size() < REQUIRED_STUDENTS_COUNT) {
+            logger.warn("Need at least {} students, but found only {}", REQUIRED_STUDENTS_COUNT, students.size());
+            System.out.println("Need at least " + REQUIRED_STUDENTS_COUNT + " students to demonstrate parallel printing");
+            return;
+        }
+
+        // Получаем первые 6 студентов
+        List<Student> firstSixStudents = students.subList(0, REQUIRED_STUDENTS_COUNT);
+        String[] names = firstSixStudents.stream()
+                .map(Student::getName)
+                .toArray(String[]::new);
+
+        System.out.println("=== Printing student names in parallel ===");
+
+        // Основной поток печатает первые два имени
+        System.out.println("Main thread: " + names[0]);
+        System.out.println("Main thread: " + names[1]);
+
+        // Первый параллельный поток печатает 3-е и 4-е имя
+        Thread thread1 = new Thread(() -> {
+            System.out.println("Parallel thread 1: " + names[2]);
+            System.out.println("Parallel thread 1: " + names[3]);
+        });
+
+        // Второй параллельный поток печатает 5-е и 6-е имя
+        Thread thread2 = new Thread(() -> {
+            System.out.println("Parallel thread 2: " + names[4]);
+            System.out.println("Parallel thread 2: " + names[5]);
+        });
+
+        // Запускаем потоки
+        thread1.start();
+        thread2.start();
+
+        // Ждем завершения потоков
+        try {
+            thread1.join();
+            thread2.join();
+        } catch (InterruptedException e) {
+            logger.error("Thread was interrupted", e);
+            Thread.currentThread().interrupt();
+        }
+
+        System.out.println("=== Parallel printing completed ===");
+    }
+
+    public void printStudentNamesSynchronized() {
+        logger.info("Was invoked method for printing student names synchronized");
+
+        List<Student> students = (List<Student>) findAll();
+
+        if (students.size() < REQUIRED_STUDENTS_COUNT) {
+            logger.warn("Need at least {} students, but found only {}", REQUIRED_STUDENTS_COUNT, students.size());
+            System.out.println("Need at least " + REQUIRED_STUDENTS_COUNT + " students to demonstrate synchronized printing");
+            return;
+        }
+
+        // Получаем первые 6 студентов
+        List<Student> firstSixStudents = students.subList(0, REQUIRED_STUDENTS_COUNT);
+        String[] names = firstSixStudents.stream()
+                .map(Student::getName)
+                .toArray(String[]::new);
+
+        System.out.println("=== Printing student names with synchronization ===");
+
+        // Основной поток печатает первые два имени
+        printStudentNameSynchronized("Main thread", names[0]);
+        printStudentNameSynchronized("Main thread", names[1]);
+
+        // Первый параллельный поток печатает 3-е и 4-е имя
+        Thread thread1 = new Thread(() -> {
+            printStudentNameSynchronized("Parallel thread 1", names[2]);
+            printStudentNameSynchronized("Parallel thread 1", names[3]);
+        });
+
+        // Второй параллельный поток печатает 5-е и 6-е имя
+        Thread thread2 = new Thread(() -> {
+            printStudentNameSynchronized("Parallel thread 2", names[4]);
+            printStudentNameSynchronized("Parallel thread 2", names[5]);
+        });
+
+        // Запускаем потоки
+        thread1.start();
+        thread2.start();
+
+        // Ждем завершения потоков
+        try {
+            thread1.join();
+            thread2.join();
+        } catch (InterruptedException e) {
+            logger.error("Thread was interrupted", e);
+            Thread.currentThread().interrupt();
+        }
+
+        System.out.println("=== Synchronized printing completed ===");
+    }
+
+    private synchronized void printStudentNameSynchronized(String threadName, String studentName) {
+        System.out.println(threadName + " (synchronized): " + studentName);
     }
 }
